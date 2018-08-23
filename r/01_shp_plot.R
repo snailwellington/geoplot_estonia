@@ -10,7 +10,7 @@ library(broom) ## needed for tidy
 library(sf)
 library(viridis)
 
-source("r/003_xy_to_latlong.R")
+source("r/util_2_xy_to_latlong.R")
 
 ### Getting density for der_plots
 
@@ -19,7 +19,7 @@ source("r/003_xy_to_latlong.R")
 # @param y A numeric vector.
 # @param n Create a square n by n grid to compute density.
 # @return The density within each square.
-get_density <- function(x, y, n = 100) {
+get_density <- function(x, y, n = 1000) {
   dens <- MASS::kde2d(x = x, y = y, n = n)
   ix <- findInterval(x, dens$x)
   iy <- findInterval(y, dens$y)
@@ -153,12 +153,13 @@ gifski(png_files = paste0("output/",gif_files), gif_file = "output/der.gif",
 
 ## density tests
 base_map+
-  geom_density2d(data = der_plot, aes(x = y, y = x), size = 1)+
-  stat_density2d(data = der_plot, aes(x= y, y = x, fill = ..level.., alpha = ..level..), bins = 25, geom = "polygon")+
+  geom_density2d(data = der_plot, aes(x = y, y = x), size = 0.1)+
+  stat_density2d(data = der_plot, aes(x= y, y = x,fill = ..level..),geom = "polygon", alpha = 0.01, bins = 75)+
   scale_fill_gradient(low = "green", high = "red")+
   scale_alpha(range = c(0.2, 0.5), guide = FALSE)+
   theme(legend.position = "none")
 
+max_year <- 2018
 
 ## prod type gif
 for (max_year in 2012:2018){
@@ -169,9 +170,7 @@ for (max_year in 2012:2018){
   
   
   density_limit <- 7*10^-11
-  
   der_plot$density <- get_density(x = der_plot$x,y = der_plot$y, n = 1000)
-  
   der_plot <- der_plot %>% 
     mutate(density = case_when(density > density_limit ~ density_limit,
                                TRUE ~ density))
